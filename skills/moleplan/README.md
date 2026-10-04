@@ -5,6 +5,18 @@
 核心设计：**agent 不持有账号密码**，而是用一把由管理员在后台签发的 API Key。
 密钥可随时撤销、轮换，带权限范围，且每一次调用都留审计记录。
 
+## 安装
+
+主仓库是私密的，所以这个 skill 会同步发布到公开仓库，用户直接从那里装：
+
+```bash
+hermes skills install moduqishi/moleplan-releases/skills/moleplan
+```
+
+装完签发一把密钥（见下一节）写进 `~/.hermes/.env` 即可。
+
+从源码安装（本仓库开发用）：`./skills/moleplan/install.sh`
+
 ## 为什么不是「给 agent 一个管理员账号」
 
 | | 账号密码 | API Key（方案） |
