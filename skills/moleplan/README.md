@@ -12,7 +12,7 @@
 ```text
 帮我接入 MolePlan（分子计划）课程数据。
 
-1. 装 skill：hermes skills install moduqishi/moleplan-releases/skills/moleplan --yes
+1. 装 skill：hermes skills install moduqishi/moleplan-releases/skills/moleplan --category productivity --yes
 2. 检查 MOLEPLAN_API_KEY 是否已配置。没有就先停下，告诉我需要密钥，
    我会去管理后台签发（用户 → Agent 密钥 页）。拿到之后存进你的密钥机制，不要回显明文。
 3. 自检：跑 skill 里的 whoami，把 auth_type / is_admin / can_write 报给我。
