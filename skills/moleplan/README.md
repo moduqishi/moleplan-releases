@@ -5,17 +5,29 @@
 核心设计：**agent 不持有账号密码**，而是用一把由管理员在后台签发的 API Key。
 密钥可随时撤销、轮换，带权限范围，且每一次调用都留审计记录。
 
-## 安装
+## 一键接入
 
-主仓库是私密的，所以这个 skill 会同步发布到公开仓库，用户直接从那里装：
+主仓库是私密的，skill 同步发布在公开仓库。**把下面这段整段复制发给你的 agent**：
 
-```bash
-hermes skills install moduqishi/moleplan-releases/skills/moleplan
+```text
+帮我接入 MolePlan（分子计划）课程数据。
+
+1. 装 skill：hermes skills install moduqishi/moleplan-releases/skills/moleplan --yes
+2. 检查 MOLEPLAN_API_KEY 是否已配置。没有就先停下，告诉我需要密钥，
+   我会去管理后台签发（用户 → Agent 密钥 页）。拿到之后存进你的密钥机制，不要回显明文。
+3. 自检：跑 skill 里的 whoami，把 auth_type / is_admin / can_write 报给我。
+4. 读出我当前学期的课程，列出来给我看。
 ```
 
-装完签发一把密钥（见下一节），把它配置为环境变量即可。
+没密钥时 agent 会停在第 2 步等你，这是刻意的 —— 密钥不经过对话，也就不会进入
+模型上下文。
 
-从源码安装（本仓库开发用）：`./skills/moleplan/install.sh`
+不是 Hermes 的 agent 工具（Cursor、Codex 等）用同一段 prompt 也行，只是第 1 步
+换成手动取文件、第 2 步换成自己设环境变量 `MOLEPLAN_API_KEY`，之后照常调用
+skill 目录下的 `scripts/moleplan.py`。
+
+在本仓库开发时，用 `scripts/install_moleplan_skill.sh` 把 `skills/moleplan/`
+装进本地 skill 目录。
 
 ## 为什么不是「给 agent 一个管理员账号」
 
