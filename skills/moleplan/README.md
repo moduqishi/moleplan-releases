@@ -103,6 +103,35 @@ python3 <skill 目录>/scripts/moleplan.py whoami
 `whoami` 返回 `auth_type: "api_key"`、`is_admin: true`、`can_write: true`
 以及能力清单，就说明整条链路通了。
 
+## CLI 能做什么
+
+零依赖（只用标准库），位于 `skills/moleplan/scripts/moleplan.py`：
+
+```bash
+# 课表 —— 周次和作息都算好了,直接给人话
+moleplan today / tomorrow / week / next
+moleplan today --date 2026-10-08 --holidays '{"2026-10-08":"复课"}'
+
+# 原始数据
+moleplan semesters / courses / schedules / snapshot --out /tmp/x.json
+moleplan import --file /tmp/x.json --dry-run    # 导入前预览差异
+
+# 后台
+moleplan overview / users / user / codes / announcements / settings / releases
+
+# 写入(成功后自动回读并打印 旧值 -> 新值)
+moleplan user-action <用户ID> ban --field 'reason=...'
+moleplan membership <用户ID> grant --field days=90
+moleplan set-settings --field registration_requires_code=true
+
+# 自检
+moleplan selftest    # 健康矩阵,输出 Markdown 表格
+moleplan whoami
+```
+
+全局开关写在子命令**前面**：`moleplan --format table users --limit 20`。写反会报
+`invalid choice`。完整说明见 [SKILL.md](SKILL.md)。
+
 ## 安全须知
 
 - **明文只在签发与轮换时显示一次。** 后台列表、日志、接口响应都只有 `mpk_` 前缀。
@@ -126,3 +155,15 @@ skill 里的 CLI 已经拦掉这种情况并明确报错，自己写脚本时要
 
 **权限不足时的状态码。** 401 = 密钥无效/已撤销/已过期；403 = 只读密钥执行写操作，
 或归属用户不是管理员。
+
+**课表数据不含放假与调休。** `week` 视图里的「没有课」只代表没有排课，不代表放假。
+法定节假日每年由国务院通知确定，skill 刻意不内置这张表；要标注就传 `--holidays`。
+学校的调课、补课同样不在数据里。
+
+**同一份数据在不同接口里形态不一致。** 导出接口的 `courses[].schedules` 是空的
+（排课在扁平的 `schedules` 里），而 `week_numbers` 写库时是 `{"data":[...]}`、
+读出来有可能是裸数组。CLI 已统一归一化（`week_numbers` 永远是数组、
+`courses[].schedules` 一定填好），自己写客户端时要注意。
+
+**`settings` 的密钥值读不出来。** `llm_api_key`、`asr_app_key` 由后端脱敏成
+`****xxxx` 后返回，只能覆盖写入。`--show-secrets` 关掉的只是 CLI 层的二次遮蔽。
