@@ -13,7 +13,7 @@
 hermes skills install moduqishi/moleplan-releases/skills/moleplan
 ```
 
-装完签发一把密钥（见下一节）写进 `~/.hermes/.env` 即可。
+装完签发一把密钥（见下一节），把它配置为环境变量即可。
 
 从源码安装（本仓库开发用）：`./skills/moleplan/install.sh`
 
@@ -74,19 +74,18 @@ mpk_<48 位十六进制>        192 bit 熵，secrets.token_hex(24)
 1. 登录管理后台 → **用户 → Agent 密钥** → 签发密钥
 2. 名称随便取（例如 `hermes-课表助手`），归属默认你自己，权限默认「读写」
 3. **立刻复制明文**——关掉弹窗就再也取不到了，丢了只能轮换
-4. 填进 agent 的环境变量：
+4. 把它配置为环境变量。agent 会通过 skill 声明的
+   `required_environment_variables` 接管它，明文不会进入模型上下文：
 
 ```bash
-# Hermes 写在 ~/.hermes/.env（模型永远看不到明文）
 MOLEPLAN_API_KEY=mpk_xxxxxxxxxxxx
 MOLEPLAN_BASE_URL=https://kb.555615.xyz
 ```
 
-5. 安装 skill 并自检：
+5. 自检：
 
 ```bash
-./skills/moleplan/install.sh
-python3 ~/.hermes/skills/productivity/moleplan/scripts/moleplan.py whoami
+python3 <skill 目录>/scripts/moleplan.py whoami
 ```
 
 `whoami` 返回 `auth_type: "api_key"`、`is_admin: true`、`can_write: true`
@@ -95,8 +94,8 @@ python3 ~/.hermes/skills/productivity/moleplan/scripts/moleplan.py whoami
 ## 安全须知
 
 - **明文只在签发与轮换时显示一次。** 后台列表、日志、接口响应都只有 `mpk_` 前缀。
-- **不要提交密钥。** 别写进脚本、别贴进 prompt。Hermes 的
-  `required_environment_variables` 会把它存在 `~/.hermes/.env`，不进模型上下文。
+- **不要提交密钥。** 别写进脚本、别贴进 prompt。skill 声明的
+  `required_environment_variables` 由 agent 自己保管，不会进入模型上下文。
 - **按需给权限。** 只做查询的 agent 就签 `admin:read`。
 - **吊销优先于删除。** `revoke` 会保留审计痕迹（谁在什么时候用过），`delete` 只用于清理。
 - **轮换走 `/rotate`**，不要「删掉重签」——轮换保留历史记录与归属关系。

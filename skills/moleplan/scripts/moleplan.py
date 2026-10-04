@@ -44,9 +44,9 @@ def _api_key(args) -> str:
     if not key:
         raise CliError(
             "缺少 MOLEPLAN_API_KEY。\n"
-            "  在管理后台「Agent 密钥」页签发一把,然后:\n"
+            "  在 MolePlan 管理后台「Agent 密钥」页签发一把,然后导出到环境变量:\n"
             "    export MOLEPLAN_API_KEY=mpk_...\n"
-            "  Hermes 用户写进 ~/.hermes/.env 即可自动注入。"
+            "  agent 工具会依据 skill 声明的 required_environment_variables 自动注入。"
         )
     return key
 
