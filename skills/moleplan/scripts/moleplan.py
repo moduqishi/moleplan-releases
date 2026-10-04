@@ -93,10 +93,13 @@ def _if_missing_key(value: str, key: str):
     return value
 
 
-def request(args, method: str, path: str, *, body=None, params=None, raw=False):
+def request(args, method: str, path: str, *, body=None, params=None, raw=False,
+            override_key: str | None = None):
     """发一个请求。非 2xx 抛 CliError,附上后端返回的 message。
 
     5xx 与网络抖动做指数退避重试;4xx 是确定性错误,不重试。
+    override_key 用于「拿刚签发的密钥试一次」这类自证场景,
+    避免去改写进程环境变量。
     """
     url = f"{_base_url(args)}{path}"
     if params:
@@ -106,7 +109,7 @@ def request(args, method: str, path: str, *, body=None, params=None, raw=False):
 
     data = None
     headers = {
-        "Authorization": f"Bearer {_api_key(args)}",
+        "Authorization": f"Bearer {override_key or _api_key(args)}",
         "Accept": "application/json",
         "User-Agent": USER_AGENT,
     }
@@ -684,16 +687,12 @@ def cmd_selftest(args):
             probe = created.get("secret")
             if not probe:
                 raise CliError("签发未返回明文")
-            # 用新密钥自证可用,再撤销
-            saved = os.environ.get("MOLEPLAN_API_KEY")
-            os.environ["MOLEPLAN_API_KEY"] = probe
-            try:
-                request(args, "GET", "/api/agent/me")
-            finally:
-                if saved:
-                    os.environ["MOLEPLAN_API_KEY"] = saved
-                else:
-                    os.environ.pop("MOLEPLAN_API_KEY", None)
+            # 用刚签发的密钥自证一次可用,然后立刻撤销。
+            # 这里走 override_key 而不是改环境变量 —— 后者既没必要,
+            # 也会被 skill 安全扫描判成动态注入凭据。
+            me = request(args, "GET", "/api/agent/me", override_key=probe)
+            if (me or {}).get("auth_type") != "api_key":
+                raise CliError("新密钥未能通过鉴权")
             request(args, "POST", f"/api/admin/api-keys/{created_key_id}/revoke")
             return f"{created.get('prefix')} 签发→自洽→已撤销"
 
